@@ -72,13 +72,37 @@ const ProductSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    numberOfReviews: {
+      type: Number,
+      default: 0,
+    },
     user: {
       type: mongoose.Types.ObjectId,
       ref: "User",
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+    },
+    toObject: {
+      virtuals: true,
+    },
+  }
 );
+
+ProductSchema.virtual("reviews", {
+  ref: "Review",
+  localField: "_id", //프로덕트 _id 가 Review의 product 와 같다.
+  foreignField: "product",
+  justOne: false,
+});
+
+// 리뷰 모델안에서 product 가 현재 지우는 this._id 와 연결
+ProductSchema.pre("remove", async function (next) {
+  await this.model("Review").deleteMany({ product: this._id });
+});
 
 module.exports = mongoose.model("Product", ProductSchema);

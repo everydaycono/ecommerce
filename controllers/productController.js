@@ -22,7 +22,10 @@ const getAllProducts = async (req, res) => {
 const getSingleProduct = async (req, res) => {
   const { id: productId } = req.params;
 
-  const product = await Product.findOne({ _id: productId });
+  const product = await Product.findOne({ _id: productId }).populate({
+    path: "reviews",
+    select: "title",
+  });
 
   if (!product) {
     throw new CustomError.NotFoundError(`No Product With id ${productId}`);
@@ -45,13 +48,14 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   const { id: productId } = req.params;
-  const product = await Product.findOneAndDelete({ _id: productId });
-  // const product = await Product.findOneAndRemove({ _id: productId });
-  console.log(product, "???");
+  const product = await Product.findOne({ _id: productId });
+  // const product = await Product.findOneAndDelete({ _id: productId });
+
   if (!product) {
     throw new CustomError.NotFoundError(`No Product With id ${productId}`);
   }
 
+  // 따로 findOneAndDelete 사용하지 않은 이유는 hook 을 사용하기위해서
   await product.remove();
 
   res.status(StatusCodes.OK).json({ msg: "Success Product Removed." });
@@ -60,6 +64,7 @@ const deleteProduct = async (req, res) => {
 // Express-fileUpload
 const uploaadImage = async (req, res) => {
   console.log(req.files, "??");
+  console.log(req, "??");
   if (!req.files) {
     throw new CustomError.BadRequestError("No File Uploaded");
   }
